@@ -1,0 +1,19 @@
+name: Windows build and offline tests
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build and test without UPS hardware
+        shell: pwsh
+        run: ./build.ps1 -Test
+      - uses: actions/upload-artifact@v4
+        with:
+          name: EatonMonitor-windows-x64
+          path: dist/EatonMonitor-3.1.0-windows-x64.zip

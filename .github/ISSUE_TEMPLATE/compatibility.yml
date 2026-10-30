@@ -1,0 +1,39 @@
+name: UPS compatibility / Compatibilità UPS
+description: Report an unverified model or confirm observations / Segnala un modello non verificato
+title: "[Compatibility] "
+labels: ["compatibility"]
+body:
+  - type: markdown
+    attributes:
+      value: "Only Eaton 5E1600UD is currently supported. English or Italian is welcome. Do not include serial numbers or private USB paths. / È supportato solo Eaton 5E1600UD. Scrivi pure in italiano. Non inserire seriali o percorsi USB privati."
+  - type: input
+    id: model
+    attributes:
+      label: Exact UPS model / Modello esatto
+    validations:
+      required: true
+  - type: input
+    id: firmware
+    attributes:
+      label: Firmware version / Versione firmware
+  - type: input
+    id: environment
+    attributes:
+      label: Windows, USB driver, app version / Windows, driver USB, versione app
+    validations:
+      required: true
+  - type: textarea
+    id: readings
+    attributes:
+      label: Readings and errors / Letture ed errori
+      description: "Which values work? Remove serial numbers and private information. / Quali letture funzionano? Rimuovi informazioni private e seriali."
+  - type: textarea
+    id: buzzer
+    attributes:
+      label: Buzzer results / Risultati cicalino
+      description: "For disable, enable and temporary mute: distinguish USB readback from audible result. Mark untested actions. / Per disabilita, abilita e silenzia: distingui conferma USB e suono. Segna i comandi non provati."
+  - type: textarea
+    id: persistence
+    attributes:
+      label: Persistence / Persistenza
+      description: "Only if already observed: after unplugging USB or restarting UPS. Otherwise write not tested. / Solo se già osservato: dopo scollegamento USB o riavvio UPS. Altrimenti scrivi non provato."

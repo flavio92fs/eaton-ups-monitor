@@ -1,0 +1,12 @@
+dist/
+bin/
+obj/
+.vs/
+*.user
+*.suo
+*.log
+driver-backup/
+*.inf
+*.cat
+*.pfx
+*.p12
