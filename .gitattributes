@@ -7,3 +7,4 @@
 *.txt text eol=lf
 *.png binary
 *.ico binary
+server/** text eol=lf

@@ -10,3 +10,7 @@ driver-backup/
 *.cat
 *.pfx
 *.p12
+.env
+.beeper.env
+.docker-config/
+__pycache__/

@@ -2,15 +2,22 @@
 
 [Italiano](README.it.md) · English
 
-<img src="assets/icon.png" alt="Eaton UPS Monitor icon" width="96">
+<img src="https://raw.githubusercontent.com/flavio92fs/eaton-ups-monitor/v3.4.0/assets/icon.png" alt="Eaton UPS Monitor icon" width="96">
 
-A small, unofficial Windows utility for monitoring an Eaton UPS over USB and controlling its buzzer. English and Italian are included in the same application. This is an independent community project, not an Eaton product.
+Eaton UPS Monitor is an unofficial monitor for the Eaton 5E1600UD. The Windows app reads the UPS over USB or connects to the dashboard on an Ubuntu server. The server runs in Docker Compose and reads the UPS over USB with Network UPS Tools (NUT). Both interfaces are available in English and Italian.
+
+| Use | Download |
+| --- | --- |
+| Windows app with direct USB or a network connection | [Windows x64 ZIP](https://github.com/flavio92fs/eaton-ups-monitor/releases/download/v3.4.0/EatonMonitor-3.4.0-windows-x64.zip) |
+| Ubuntu server with USB and network dashboard | [Ubuntu Docker ZIP](https://github.com/flavio92fs/eaton-ups-monitor/releases/download/v3.4.0/Eaton-UPS-Server-Ubuntu-3.4.0.zip) · [Setup guide](https://github.com/flavio92fs/eaton-ups-monitor/blob/v3.4.0/server/README.md) |
+
+[Release notes and SHA-256 checksums](https://github.com/flavio92fs/eaton-ups-monitor/releases/tag/v3.4.0)
 
 ## Supported hardware
 
 **The only tested and currently supported model is Eaton 5E1600UD (5E 1600 G2), firmware 01.02.0009.** Testing used USB VID `0463`, PID `FFFF`, with the Eaton WinUSB driver on Windows x64. This USB ID is shared by other devices and does not establish compatibility by itself.
 
-Other UPS models and firmware versions are **unverified**. You are welcome to test them and [open a compatibility report](../../issues/new?template=compatibility.yml). A report does not automatically add a device to the supported list. The app currently discovers only this USB ID and requires exactly one matching UPS; it does not select among multiple units.
+Other UPS models and firmware versions are **unverified**. You are welcome to test them and [open a compatibility report](https://github.com/flavio92fs/eaton-ups-monitor/issues/new?template=compatibility.yml). A report does not automatically add a device to the supported list. The app currently discovers only this USB ID and requires exactly one matching UPS; it does not select among multiple units.
 
 ## Features
 
@@ -21,14 +28,14 @@ Other UPS models and firmware versions are **unverified**. You are welcome to te
 - Optional per-user installation, desktop shortcut and startup at Windows sign-in in the tray.
 - English/Italian UI: **Settings → Language**. Exit completely and reopen to apply a change. The first launch follows Windows language, defaulting to English outside Italian.
 
-**There is no automatic PC shutdown.** This app does not replace Companion's shutdown policies or a complete UPS protection system. Monitoring and overlays require the app to be running with USB connected. A Raspberry Pi or network/Bluetooth bridge is not supported by this Windows app.
+Monitoring and overlays require the app to be running and receiving data from its selected source. Automatic PC shutdown is outside the scope of this project.
 
-## Download and run
+## Install and run on Windows
 
-1. Download `EatonMonitor-3.1.0-windows-x64.zip` from [Releases](../../releases).
-2. Extract the ZIP and run `EatonMonitor.exe` on Windows x64 with .NET Framework 4.8.
-3. Connect the UPS by USB and fully exit Eaton UPS Companion so it does not compete for the device. The original Eaton WinUSB driver must already be installed.
-4. The app is portable. For installation, use **Settings → Install for current user**, then optionally enable **Start with Windows**. Installation uses `%LOCALAPPDATA%\EatonMonitor`; normal operation needs no administrator rights. The executable is not code-signed.
+1. Get the Windows x64 ZIP from [Releases](https://github.com/flavio92fs/eaton-ups-monitor/releases) and extract it. Windows needs .NET Framework 4.8.
+2. Run `EatonMonitorSetup.exe` to install for the current user, or `EatonMonitor.exe` to run the portable app. Installation uses `%LOCALAPPDATA%\EatonMonitor` and offers optional startup with Windows. The executables are unsigned.
+3. For **Direct USB**, plug the UPS into the PC and fully exit Eaton UPS Companion. If the original WinUSB driver is missing, select **Also install the Eaton USB driver** in setup, choose your original `ups_usb.inf` alongside `ups_usb.cat`, and approve the administrator prompt.
+4. For **Ubuntu server**, plug the UPS into the server and follow the [Ubuntu setup guide](https://github.com/flavio92fs/eaton-ups-monitor/blob/v3.4.0/server/README.md). The Windows app uses the dashboard URL and needs no UPS driver in this mode.
 
 Command line options:
 
@@ -42,6 +49,16 @@ Command line options:
 
 `--lang` overrides the saved language for that process only. If an instance is already running, exit it completely before changing command line options. Uninstall is also available from Windows Installed apps and leaves the USB driver installed.
 
+## Ubuntu server connection
+
+Under **Settings → Data source**, select **Ubuntu server**, enter the dashboard address (for example `http://server:8099`), and select **Save connection**. The tray tooltip shows mains status, battery and watts. Connection loss is shown separately from a reported power outage. Select **Direct USB** to switch back to local USB.
+
+If the address or port changes, edit the URL in the same settings and save it again. For telemetry, a local DNS hostname or [Tailscale MagicDNS](https://tailscale.com/docs/features/magicdns) name can keep working when the IP changes, as long as it resolves to the new address and the dashboard listens on it. See the [server guide](https://github.com/flavio92fs/eaton-ups-monitor/blob/v3.4.0/server/README.md#changing-the-address-or-port) to update the server side.
+
+If the server administrator has enabled remote beeper commands, use its numeric Tailscale IPv4 address and enter its **Beeper key**. The key is encrypted for the current Windows user and scoped to the URL. Enter it again if you change the URL. Leaving it empty enables telemetry only. The three supported commands are enable, disable and temporary mute.
+
+For a one-time override, run `EatonMonitor.exe --server http://server:8099` after exiting any existing instance.
+
 ## Buzzer behavior and verification
 
 Temporary mute was acoustically confirmed on the tested UPS during a real mains outage. Disable/enable states were also confirmed by USB readback. The only write operation is the separately validated HID `AudibleAlarmControl` feature, report `0x14`, with values `1` (disable), `2` (enable), or `3` (temporary mute). The app sends no UPS shutdown, outlet switching or firmware commands.
@@ -52,7 +69,7 @@ The overlay preview is visual only and sends no buzzer command. Automated tests 
 
 ## USB driver and Companion removal
 
-The source and release contain **no Eaton driver binaries or Companion files**. Keep a copy of the original official driver before removing Companion: its uninstaller may remove the USB driver needed by this app.
+Get Companion from the [official Eaton download page](https://www.eaton.com/gb/en-gb/catalog/backup-power-ups-surge-it-power-distribution/eaton-ups-companion---emea.html) if you need the original driver. Install Companion to obtain its driver, then export the package if you want to keep a copy. Its uninstaller may remove the driver. Eaton Monitor setup accepts that local copy. The public download contains the monitor, setup and documentation.
 
 From an elevated Windows terminal, use `pnputil /enum-drivers` to identify the Eaton UPS driver's published name, for example `oem42.inf` (use your actual name, not the example). Create a backup directory and export that package:
 
@@ -61,7 +78,7 @@ New-Item -ItemType Directory -Force "$env:USERPROFILE\Documents\EatonDriverBacku
 pnputil /export-driver oem42.inf "$env:USERPROFILE\Documents\EatonDriverBackup"
 ```
 
-Keep the entire exported package, including its catalog. If the driver is removed, use **Settings → Restore Eaton USB driver…** and select the original exported INF, or reinstall the official driver through Eaton's installer. Windows requests administrator permission only for driver installation. The restore button runs `pnputil /add-driver "selected.inf" /install`; it does not download or modify drivers.
+Keep the entire exported package, including its catalog. To install it, select the original exported INF in setup or in **Settings → Restore Eaton USB driver…**. Both use Windows PnPUtil. If Windows requests a restart, restart before using the UPS. If the monitor still cannot see the UPS, reconnect the USB cable and check that Windows associated the Eaton WinUSB driver with the device.
 
 ## Build and tests
 
@@ -73,10 +90,10 @@ No third-party libraries or package downloads are required. From Windows x64 Pow
 
 Output: `dist/EatonMonitor.exe` and the release ZIP. Build uses the .NET Framework C# compiler. Offline tests cover HID decoding, scaling, live status fields, malformed input, buzzer report validation, localization and installer resource policy. No UPS is required and no hardware commands are sent by the tests. GitHub Actions also builds and runs these tests.
 
-The fixtures contain the tested model's USB report layout and selected measurement packets, with no serial numbers or USB string tables. The app keeps session events in memory; Windows registry preferences and installation/startup entries are stored under the current user. The app has no network reporting or telemetry service.
+The fixtures contain the tested model's USB report layout and selected measurement packets, with no serial numbers or USB string tables. The Windows client saves preferences for the current user and reads network data from the configured dashboard. The Ubuntu server exposes a limited set of UPS fields on its configured private interfaces.
 
 ## Contributing and license
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for compatibility reports. Do not upload serial numbers, private device paths, vendor binaries or proprietary firmware. Test results should distinguish USB readback, audible behavior and persistence.
+See [CONTRIBUTING.md](https://github.com/flavio92fs/eaton-ups-monitor/blob/v3.4.0/CONTRIBUTING.md) for compatibility reports. Do not upload serial numbers, private device paths, vendor binaries or proprietary firmware. Test results should distinguish USB readback, audible behavior and persistence.
 
 Our source and icon are licensed under [MIT](LICENSE). Eaton is a trademark of its respective owner; no affiliation or endorsement is implied.

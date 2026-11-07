@@ -50,6 +50,23 @@ class TelemetryTests
             Assert(Rejected(()=>Validate(wrongUsage)),"Missing alarm usage rejected");
             Assert(L.T("Disabilita cicalino")=="Disable buzzer" && L.T("non disponibile")=="unavailable","English controls and unavailable state");
             Assert(MonitorForm.Runtime(90)=="1 min 30 s" && MonitorForm.Runtime(-1)=="unavailable","Runtime formatting and invalid sentinel");
+            var remote=ServerTelemetry.Decode("{\"ok\":true,\"values\":{\"ups.status\":\"OB LB\",\"battery.charge\":\"24\",\"ups.realpower\":\"181\",\"ups.beeper.status\":\"disabled\"}}");
+            Assert(!remote.AcPresent && remote.Get("UPS.PowerSummary.RemainingCapacity")==24
+                && remote.Get("UPS.PowerConverter.Output.ActivePower")==181
+                && remote.Get("UPS.PowerSummary.AudibleAlarmControl")==1,
+                "Server status, battery, active power and beeper map to the monitor");
+            Assert(Rejected(()=>ServerTelemetry.Decode("{\"ok\":true,\"values\":{\"ups.status\":\"WAIT\"}}"))
+                && Rejected(()=>ServerTelemetry.Decode("{\"ok\":false,\"error\":\"ups_unavailable\"}")),
+                "Unavailable server data never becomes a blackout");
+            Assert(ServerTelemetry.ParseAddress("http://server:8099/api/ups").AbsoluteUri=="http://server:8099/"
+                && Rejected(()=>ServerTelemetry.ParseAddress("http://user:password@server:8099")),
+                "Server addresses are normalized and embedded credentials are rejected");
+            string testBeeperKey=new string('a',64);
+            Assert(ServerTelemetry.CanSetBeeper(new Uri("http://100.64.0.1:8099"),testBeeperKey)
+                && !ServerTelemetry.CanSetBeeper(new Uri("http://100.128.0.1:8099"),testBeeperKey)
+                && !ServerTelemetry.CanSetBeeper(new Uri("http://192.0.2.10:8099"),testBeeperKey)
+                && !ServerTelemetry.CanSetBeeper(new Uri("http://100.64.0.1:8099"),""),
+                "Remote beeper requires a Tailscale address and a valid key");
             Application.EnableVisualStyles();
             using(var setup=new SetupForm())Assert(Texts(setup).Contains("Install / Update"),"English installer controls");
             using(var mutex=new Mutex())using(var monitor=new MonitorForm(mutex,false)) {

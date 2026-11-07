@@ -1,0 +1,41 @@
+name: eaton-ups-server
+services:
+  nut:
+    build: .
+    image: eaton-ups-server:local
+    container_name: eaton-ups-nut
+    network_mode: host
+    env_file:
+      - path: .beeper.env
+        required: false
+    devices:
+      - "${UPS_USB_DEVICE:?Start with bash up.sh}:${UPS_USB_DEVICE:?Start with bash up.sh}:rw"
+    cap_drop: [ALL]
+    cap_add: [SETGID]
+    security_opt: [no-new-privileges:true]
+    read_only: true
+    tmpfs:
+      - /run/nut:mode=0750
+      - /tmp
+    init: true
+    restart: unless-stopped
+    command: [bash, /usr/local/bin/start-ups-nut]
+  web:
+    image: eaton-ups-server:local
+    container_name: eaton-ups-web
+    network_mode: host
+    env_file:
+      - path: .beeper.env
+        required: false
+    environment:
+      UPS_WEB_BIND: "${UPS_WEB_BIND:-127.0.0.1}"
+      # Change the default here, or override it with UPS_WEB_PORT in .env.
+      UPS_WEB_PORT: "${UPS_WEB_PORT:-8099}"
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    read_only: true
+    user: "65534:65534"
+    init: true
+    restart: unless-stopped
+    depends_on: [nut]
+    command: [python3, /opt/ups-web/server.py]

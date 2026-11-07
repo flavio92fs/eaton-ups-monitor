@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Eaton UPS · Monitor</title>
+<style>
+  :root {color-scheme:dark;--bg:#101722;--panel:#1b2635;--muted:#acbcd0;--accent:#7be3b8;--line:#344359}
+  * {box-sizing:border-box}
+  body {margin:0;background:var(--bg);color:#eef4fa;font:16px system-ui,sans-serif}
+  main {max-width:960px;margin:auto;padding:clamp(20px,5vw,54px)}
+  header {display:flex;align-items:center;flex-wrap:wrap;gap:14px;margin-bottom:26px}
+  .mark {background:#23443f;color:var(--accent);border-radius:14px;padding:8px 14px;font-size:24px}
+  h1,h2,p {margin:0} h1 {font-size:clamp(25px,5vw,36px)} h2 {font-size:19px}
+  .muted {color:var(--muted)}
+  #status {border:1px solid var(--line);border-radius:14px;padding:16px 20px;margin-bottom:18px;font-weight:650}
+  #status[data-state=online] {color:var(--accent)} #status[data-state=battery] {color:#ffca78}
+  .cards {display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:12px}
+  .card,section {background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px}
+  .card span {color:var(--muted);font-size:14px;display:block} .card strong {font-size:clamp(22px,4vw,32px)}
+  section {margin-top:18px} dl {margin:10px 0 0}
+  .row {display:flex;justify-content:space-between;gap:12px;border-top:1px solid var(--line);padding:10px 0}
+  dt {color:var(--muted)} dd {margin:0;text-align:right;font-variant-numeric:tabular-nums}
+  footer {margin-top:16px;color:var(--muted);font-size:13px}
+  nav {margin-left:auto;white-space:nowrap;font-size:14px} nav a {color:var(--accent)}
+</style>
+<main>
+  <header><div class="mark" aria-hidden="true">↯</div><div><h1>Eaton UPS Monitor</h1><p class="muted" id="model" data-it="5E1600UD · Telemetria USB">5E1600UD · USB telemetry</p></div>
+    <nav><a href="?lang=en" lang="en">English</a> · <a href="?lang=it" lang="it">Italiano</a></nav>
+  </header>
+  <p id="status" aria-live="polite" data-it="Connessione all’UPS…">Connecting to the UPS…</p>
+  <div class="cards">
+    <div class="card"><span data-it="Batteria">Battery</span><strong id="battery">—</strong></div>
+    <div class="card"><span data-it="Autonomia stimata">Estimated runtime</span><strong id="runtime">—</strong></div>
+    <div class="card"><span data-it="Carico">Load</span><strong id="load">—</strong></div>
+    <div class="card"><span data-it="Potenza attiva">Active power</span><strong id="watts">—</strong></div>
+  </div>
+  <section><h2 data-it="Misure e stato">Readings and status</h2>
+    <dl>
+      <div class="row"><dt data-it="Potenza apparente">Apparent power</dt><dd id="va">—</dd></div>
+      <div class="row"><dt data-it="Ingresso">Input</dt><dd id="input">—</dd></div>
+      <div class="row"><dt data-it="Uscita">Output</dt><dd id="output">—</dd></div>
+      <div class="row"><dt data-it="Tensione batteria">Battery voltage</dt><dd id="voltage">—</dd></div>
+      <div class="row"><dt data-it="Frequenza uscita">Output frequency</dt><dd id="frequency">—</dd></div>
+      <div class="row"><dt data-it="Cicalino">Beeper</dt><dd id="beeper">—</dd></div>
+      <div class="row"><dt data-it="Stato NUT">NUT status</dt><dd id="flags">—</dd></div>
+    </dl>
+  </section>
+  <footer id="updated" data-it="Aggiornamento ogni 3 secondi · Sola lettura">Refreshes every 3 seconds · Read only</footer>
+</main>
+<script>
+  const requested = new URLSearchParams(location.search).get('lang');
+  const italian = requested === 'it' || (requested !== 'en' && /^it(?:-|$)/i.test(navigator.language));
+  const locale = italian ? 'it-IT' : 'en';
+  const t = (english, italianText) => italian ? italianText : english;
+  if (italian) {
+    document.documentElement.lang = 'it';
+    document.querySelectorAll('[data-it]').forEach(node => { node.textContent = node.dataset.it; });
+  }
+  const modelFallback = document.getElementById('model').textContent;
+  const number = new Intl.NumberFormat(locale, {maximumFractionDigits:1});
+  const set = (id, value) => { document.getElementById(id).textContent = value; };
+  const fields = {
+    battery:['battery.charge','%'], load:['ups.load','%'], watts:['ups.realpower',' W'],
+    va:['ups.power',' VA'], input:['input.voltage',' V'], output:['output.voltage',' V'],
+    voltage:['battery.voltage',' V'], frequency:['output.frequency',' Hz']
+  };
+  const format = (value, suffix) => value !== undefined && value.trim() !== '' && Number.isFinite(Number(value))
+    ? number.format(Number(value)) + suffix : '—';
+  async function update() {
+    const indicator = document.getElementById('status');
+    try {
+      const response = await fetch('/api/ups', {signal:AbortSignal.timeout(4500)});
+      if (!response.ok) throw new Error('UPS unavailable');
+      const snapshot = await response.json();
+      const v = snapshot.values;
+      const flags = v['ups.status'].split(/\s+/);
+      const onBattery = flags.includes('OB');
+      const online = flags.includes('OL');
+      const warnings = [['LB',t('Low battery','Batteria bassa')],['RB',t('Replace battery','Batteria da sostituire')],['OVER',t('Overload','Sovraccarico')]]
+        .filter(([flag])=>flags.includes(flag)).map(([,label])=>label);
+      indicator.dataset.state = onBattery ? 'battery' : online ? 'online' : '';
+      const state = onBattery ? t('UPS on battery','UPS a batteria')
+        : online ? t('Mains power available','Rete elettrica presente') : t('UPS status','Stato UPS');
+      set('status', [state, ...warnings].join(' · '));
+      set('model', [v['device.mfr'], v['device.model'] || v['ups.model'], v['ups.firmware'] && 'Firmware '+v['ups.firmware']].filter(Boolean).join(' · ') || modelFallback);
+      for (const [id,[key,suffix]] of Object.entries(fields)) set(id, format(v[key], suffix));
+      const seconds = Number(v['battery.runtime']);
+      set('runtime', Number.isFinite(seconds) && seconds >= 0 ? Math.floor(seconds/60)+' min '+Math.floor(seconds%60)+' s' : '—');
+      const beepers = {enabled:t('Enabled','Attivo'), disabled:t('Disabled','Disattivato'), muted:t('Muted','Silenziato')};
+      set('beeper', beepers[v['ups.beeper.status']] || '—');
+      set('flags', v['ups.status']);
+      const time = new Date(snapshot.updated_at).toLocaleTimeString(locale);
+      set('updated', t('Updated at ','Aggiornato alle ') + time + t(' · Read only',' · Sola lettura'));
+    } catch {
+      indicator.dataset.state = '';
+      set('status',t('UPS data unavailable','Dati UPS non disponibili'));
+      for (const id of [...Object.keys(fields),'runtime','beeper','flags']) set(id,'—');
+      set('updated',t('Waiting for the USB connection or NUT service','In attesa del collegamento USB o del servizio NUT'));
+    } finally { setTimeout(update,3000); }
+  }
+  update();
+</script>
+</html>

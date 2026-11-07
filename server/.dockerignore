@@ -1,0 +1,10 @@
+.env
+.beeper.env
+.beeper.env.*
+.docker-config
+.auto-usb
+.usb.lock
+usb-reconnect.log
+.git
+*.zip
+**/__pycache__
