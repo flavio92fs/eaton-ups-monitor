@@ -8,7 +8,8 @@ Eaton UPS Monitor è uno strumento non ufficiale per l’Eaton 5E1600UD. L’app
 
 | Utilizzo | Download |
 | --- | --- |
-| App Windows via USB o via rete | [ZIP Windows x64](https://github.com/flavio92fs/eaton-ups-monitor/releases/download/v3.4.0/EatonMonitor-3.4.0-windows-x64.zip) |
+| App Windows portatile, via USB o via rete | [ZIP portatile](https://github.com/flavio92fs/eaton-ups-monitor/releases/download/v3.4.0/EatonMonitor-3.4.0-windows-x64-portable.zip) |
+| Installer Windows, con modalità USB e rete | [EatonMonitorSetup.exe](https://github.com/flavio92fs/eaton-ups-monitor/releases/download/v3.4.0/EatonMonitorSetup.exe) |
 | Server Ubuntu con USB e dashboard di rete | [ZIP Ubuntu Docker](https://github.com/flavio92fs/eaton-ups-monitor/releases/download/v3.4.0/Eaton-UPS-Server-Ubuntu-3.4.0.zip) · [Guida all’installazione](https://github.com/flavio92fs/eaton-ups-monitor/blob/v3.4.0/server/README.it.md) |
 
 [Note di rilascio e checksum SHA-256](https://github.com/flavio92fs/eaton-ups-monitor/releases/tag/v3.4.0)
@@ -32,8 +33,8 @@ Letture e overlay richiedono che l’app sia in esecuzione e riceva dati dalla s
 
 ## Installazione e avvio su Windows
 
-1. Scarica lo ZIP Windows x64 dalle [Release](https://github.com/flavio92fs/eaton-ups-monitor/releases) ed estrailo. Serve .NET Framework 4.8.
-2. Avvia `EatonMonitorSetup.exe` per installare l’app per l’utente corrente, oppure `EatonMonitor.exe` per usarla in modalità portatile. Il percorso di installazione è `%LOCALAPPDATA%\EatonMonitor` e l’avvio con Windows è facoltativo. Gli eseguibili sono privi di firma digitale.
+1. Scegli lo ZIP portatile oppure l’installer dalle [Release](https://github.com/flavio92fs/eaton-ups-monitor/releases). Entrambi richiedono Windows x64 e .NET Framework 4.8.
+2. Per l’uso portatile, estrai lo ZIP e avvia `EatonMonitor.exe`. Le preferenze sono salvate nel registro dell’utente Windows corrente. Per l’installazione, avvia `EatonMonitorSetup.exe` mantenendo questo nome del file. L’installer usa `%LOCALAPPDATA%\EatonMonitor` e offre l’avvio automatico con Windows. Gli eseguibili sono privi di firma digitale.
 3. Per **USB diretto**, collega l’UPS al PC e chiudi completamente Eaton UPS Companion. Se manca il driver WinUSB originale, seleziona **Installa anche il driver USB Eaton**, scegli `ups_usb.inf` con `ups_usb.cat` nella stessa cartella e conferma la richiesta di amministratore.
 4. Per **Server Ubuntu**, collega l’UPS al server e segui la [guida Ubuntu](https://github.com/flavio92fs/eaton-ups-monitor/blob/v3.4.0/server/README.it.md). In questa modalità l’app usa l’indirizzo della dashboard e può funzionare senza il driver dell’UPS.
 

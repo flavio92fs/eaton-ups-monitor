@@ -8,7 +8,8 @@ Eaton UPS Monitor is an unofficial monitor for the Eaton 5E1600UD. The Windows a
 
 | Use | Download |
 | --- | --- |
-| Windows app with direct USB or a network connection | [Windows x64 ZIP](https://github.com/flavio92fs/eaton-ups-monitor/releases/download/v3.4.0/EatonMonitor-3.4.0-windows-x64.zip) |
+| Windows portable app with USB and network modes | [Portable ZIP](https://github.com/flavio92fs/eaton-ups-monitor/releases/download/v3.4.0/EatonMonitor-3.4.0-windows-x64-portable.zip) |
+| Windows installer with USB and network modes | [EatonMonitorSetup.exe](https://github.com/flavio92fs/eaton-ups-monitor/releases/download/v3.4.0/EatonMonitorSetup.exe) |
 | Ubuntu server with USB and network dashboard | [Ubuntu Docker ZIP](https://github.com/flavio92fs/eaton-ups-monitor/releases/download/v3.4.0/Eaton-UPS-Server-Ubuntu-3.4.0.zip) · [Setup guide](https://github.com/flavio92fs/eaton-ups-monitor/blob/v3.4.0/server/README.md) |
 
 [Release notes and SHA-256 checksums](https://github.com/flavio92fs/eaton-ups-monitor/releases/tag/v3.4.0)
@@ -32,8 +33,8 @@ Monitoring and overlays require the app to be running and receiving data from it
 
 ## Install and run on Windows
 
-1. Get the Windows x64 ZIP from [Releases](https://github.com/flavio92fs/eaton-ups-monitor/releases) and extract it. Windows needs .NET Framework 4.8.
-2. Run `EatonMonitorSetup.exe` to install for the current user, or `EatonMonitor.exe` to run the portable app. Installation uses `%LOCALAPPDATA%\EatonMonitor` and offers optional startup with Windows. The executables are unsigned.
+1. Choose the portable ZIP or the standalone installer from [Releases](https://github.com/flavio92fs/eaton-ups-monitor/releases). Both require Windows x64 and .NET Framework 4.8.
+2. For portable use, extract the ZIP and run `EatonMonitor.exe`. Preferences are saved in the current Windows user's registry. For installation, run `EatonMonitorSetup.exe` using that filename. Setup installs into `%LOCALAPPDATA%\EatonMonitor` and offers optional startup with Windows. The executables are unsigned.
 3. For **Direct USB**, plug the UPS into the PC and fully exit Eaton UPS Companion. If the original WinUSB driver is missing, select **Also install the Eaton USB driver** in setup, choose your original `ups_usb.inf` alongside `ups_usb.cat`, and approve the administrator prompt.
 4. For **Ubuntu server**, plug the UPS into the server and follow the [Ubuntu setup guide](https://github.com/flavio92fs/eaton-ups-monitor/blob/v3.4.0/server/README.md). The Windows app uses the dashboard URL and needs no UPS driver in this mode.
 

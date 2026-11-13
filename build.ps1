@@ -30,4 +30,17 @@ if ($Test) {
 $zip = Join-Path $dist 'EatonMonitor-3.4.0-windows-x64.zip'
 $package = @('EatonMonitor.exe','EatonMonitorSetup.exe','README.md','README.it.md','LICENSE','CHANGELOG.md') | ForEach-Object { Join-Path $dist $_ }
 Compress-Archive -LiteralPath $package -DestinationPath $zip -Force
-Get-FileHash -Algorithm SHA256 -LiteralPath $zip | Select-Object Hash,Path
+Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'docs\PORTABLE.md') -Destination $dist -Force
+$portableZip = Join-Path $dist 'EatonMonitor-3.4.0-windows-x64-portable.zip'
+$portableFiles = @('EatonMonitor.exe','README.md','README.it.md','LICENSE','CHANGELOG.md','PORTABLE.md') |
+    ForEach-Object { Join-Path $dist $_ }
+Compress-Archive -LiteralPath $portableFiles -DestinationPath $portableZip -Force
+$downloads = @($portableZip, (Join-Path $dist 'EatonMonitorSetup.exe'))
+$checksums = foreach ($file in $downloads) {
+    $hash = (Get-FileHash -Algorithm SHA256 -LiteralPath $file).Hash.ToLowerInvariant()
+    $hash + '  ' + [IO.Path]::GetFileName($file)
+}
+[IO.File]::WriteAllText((Join-Path $dist 'WINDOWS-SHA256SUMS.txt'),
+    ($checksums -join "`n") + "`n", [Text.Encoding]::ASCII)
+Get-FileHash -Algorithm SHA256 -LiteralPath @($zip, $portableZip, (Join-Path $dist 'EatonMonitorSetup.exe')) |
+    Select-Object Hash,Path
