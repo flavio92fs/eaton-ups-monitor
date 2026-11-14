@@ -10,6 +10,7 @@ Eaton UPS Monitor è uno strumento non ufficiale per l’Eaton 5E1600UD. L’app
 | --- | --- |
 | App Windows portatile, via USB o via rete | [ZIP portatile](https://github.com/flavio92fs/eaton-ups-monitor/releases/download/v3.4.0/EatonMonitor-3.4.0-windows-x64-portable.zip) |
 | Installer Windows, con modalità USB e rete | [EatonMonitorSetup.exe](https://github.com/flavio92fs/eaton-ups-monitor/releases/download/v3.4.0/EatonMonitorSetup.exe) |
+| Pacchetto driver USB originale, con INF e CAT | [Download ufficiale Eaton UPS Companion](https://www.eaton.com/gb/en-gb/catalog/backup-power-ups-surge-it-power-distribution/eaton-ups-companion---emea.html) · [Istruzioni per il driver](#driver-usb-e-rimozione-di-companion) |
 | Server Ubuntu con USB e dashboard di rete | [ZIP Ubuntu Docker](https://github.com/flavio92fs/eaton-ups-monitor/releases/download/v3.4.0/Eaton-UPS-Server-Ubuntu-3.4.0.zip) · [Guida all’installazione](https://github.com/flavio92fs/eaton-ups-monitor/blob/v3.4.0/server/README.it.md) |
 
 [Note di rilascio e checksum SHA-256](https://github.com/flavio92fs/eaton-ups-monitor/releases/tag/v3.4.0)
@@ -70,7 +71,13 @@ L’anteprima overlay è soltanto visiva e non invia comandi al cicalino. I test
 
 ## Driver USB e rimozione di Companion
 
-Se ti serve il driver originale, scarica Companion dalla [pagina ufficiale Eaton](https://www.eaton.com/gb/en-gb/catalog/backup-power-ups-surge-it-power-distribution/eaton-ups-companion---emea.html) e installalo. Esporta il pacchetto se vuoi conservarne una copia prima di disinstallare Companion, perché il suo disinstallatore può rimuovere il driver. L’installer di Eaton Monitor usa la copia locale. Il download pubblico contiene monitor, installer e documentazione.
+Per ottenere `ups_usb.inf` e il corrispondente `ups_usb.cat`, usa il collegamento **Download UPS Companion** sulla pagina Eaton qui sotto. Queste istruzioni usano il driver originale fornito con Companion.
+
+[Scarica il driver originale tramite Eaton UPS Companion](https://www.eaton.com/gb/en-gb/catalog/backup-power-ups-surge-it-power-distribution/eaton-ups-companion---emea.html)
+
+Dopo aver installato Companion, cerca `ups_usb.inf` e `ups_usb.cat` in `C:\Program Files\Eaton\UPS Companion\bin`. Se hai scelto una cartella diversa durante l’installazione, usa la sua sottocartella `bin`. Nell’installer di Eaton Monitor seleziona **Installa anche il driver USB Eaton → Scegli file INF…** e scegli quel file INF. Conserva il CAT nella stessa cartella. I passaggi di esportazione qui sotto permettono di conservare il pacchetto completo prima di rimuovere Companion.
+
+Se ti colleghi soltanto al server Ubuntu, togli la spunta al driver USB e installa l’app Windows.
 
 Da terminale Windows come amministratore, usa `pnputil /enum-drivers` per identificare il nome pubblicato del driver UPS Eaton, per esempio `oem42.inf` (sostituiscilo con quello effettivo). Crea una cartella ed esporta il pacchetto:
 
