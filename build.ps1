@@ -27,11 +27,11 @@ if ($Test) {
     & (Join-Path $dist 'Tests.exe') (Join-Path $PSScriptRoot 'tests\fixtures\descriptor.txt') (Join-Path $PSScriptRoot 'tests\fixtures\reports.json')
     if ($LASTEXITCODE -ne 0) { throw 'Tests failed.' }
 }
-$zip = Join-Path $dist 'EatonMonitor-3.4.0-windows-x64.zip'
+$zip = Join-Path $dist 'EatonMonitor-3.4.1-windows-x64.zip'
 $package = @('EatonMonitor.exe','EatonMonitorSetup.exe','README.md','README.it.md','LICENSE','CHANGELOG.md') | ForEach-Object { Join-Path $dist $_ }
 Compress-Archive -LiteralPath $package -DestinationPath $zip -Force
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'docs\PORTABLE.md') -Destination $dist -Force
-$portableZip = Join-Path $dist 'EatonMonitor-3.4.0-windows-x64-portable.zip'
+$portableZip = Join-Path $dist 'EatonMonitor-3.4.1-windows-x64-portable.zip'
 $portableFiles = @('EatonMonitor.exe','README.md','README.it.md','LICENSE','CHANGELOG.md','PORTABLE.md') |
     ForEach-Object { Join-Path $dist $_ }
 Compress-Archive -LiteralPath $portableFiles -DestinationPath $portableZip -Force

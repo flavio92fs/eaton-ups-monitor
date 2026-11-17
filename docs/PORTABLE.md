@@ -1,4 +1,4 @@
-# Eaton UPS Monitor 3.4.0 portable
+# Eaton UPS Monitor 3.4.1 portable
 
 ## English
 

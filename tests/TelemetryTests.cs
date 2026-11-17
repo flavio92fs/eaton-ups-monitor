@@ -15,6 +15,25 @@ class TelemetryTests
     static bool Rejected(Action action){try{action();return false;}catch{return true;}}
     static object Validate(byte[] descriptor){return typeof(EatonUsbProbe).GetMethod("ValidateAlarmDescriptor",BindingFlags.Static|BindingFlags.NonPublic).Invoke(null,new object[]{descriptor});}
     static List<string> Texts(Control root){var result=new List<string>{root.Text};foreach(Control child in root.Controls)result.AddRange(Texts(child));return result;}
+    static object Member(MonitorForm form,string name)
+    {
+        return typeof(MonitorForm).GetField(name,BindingFlags.Instance|BindingFlags.NonPublic).GetValue(form);
+    }
+    static void SetMember(MonitorForm form,string name,object value)
+    {
+        typeof(MonitorForm).GetField(name,BindingFlags.Instance|BindingFlags.NonPublic).SetValue(form,value);
+    }
+    static void BeeperControls(MonitorForm form,UpsSnapshot snapshot,string action,bool enabled,bool canMute)
+    {
+        SetMember(form,"latest",snapshot);
+        SetMember(form,"connected",true);
+        if(snapshot.AcPresent)
+            typeof(MonitorForm).GetMethod("Render",BindingFlags.Instance|BindingFlags.NonPublic).Invoke(form,new object[]{snapshot});
+        typeof(MonitorForm).GetMethod("EnabledActions",BindingFlags.Instance|BindingFlags.NonPublic).Invoke(form,new object[]{true});
+        var toggle=(Button)Member(form,"beeperToggle");
+        Assert(toggle.Text==action && toggle.Enabled==enabled && ((Button)Member(form,"mute")).Enabled==canMute,
+            "Beeper controls show "+action+" with the current permissions and state");
+    }
     [STAThread] static int Main(string[] args)
     {
         try {
@@ -71,7 +90,35 @@ class TelemetryTests
             using(var setup=new SetupForm())Assert(Texts(setup).Contains("Install / Update"),"English installer controls");
             using(var mutex=new Mutex())using(var monitor=new MonitorForm(mutex,false)) {
                 var text=Texts(monitor);
-                Assert(text.Contains("Settings") && text.Contains("Disable buzzer") && text.Contains("Exit completely") && text.Contains("BATTERY") && text.Contains("ESTIMATED RUNTIME") && text.Contains("LOAD"),"English monitor UI and all summary cards without opening USB");
+                Assert(text.Contains("Settings") && text.Contains("Beeper status unavailable") && text.Contains("Exit completely") && text.Contains("BATTERY") && text.Contains("ESTIMATED RUNTIME") && text.Contains("LOAD"),"English monitor UI and all summary cards without opening USB");
+                s.Values["UPS.PowerSummary.AudibleAlarmControl"]=new UpsValue{Number=1};
+                BeeperControls(monitor,s,"Enable buzzer",true,false);
+                Assert(((Label)Member(monitor,"alarm")).Text=="Buzzer: disabled","USB disabled beeper is clearly reported beside its action");
+                s.Values["UPS.PowerSummary.AudibleAlarmControl"].Number=2;
+                BeeperControls(monitor,s,"Disable buzzer",true,false);
+                s.Values["UPS.PowerSummary.AudibleAlarmControl"].Number=3;
+                BeeperControls(monitor,s,"Disable buzzer",true,false);
+                s.Values.Remove("UPS.PowerSummary.AudibleAlarmControl");
+                BeeperControls(monitor,s,"Beeper status unavailable",false,false);
+                Assert(((Label)Member(monitor,"alarm")).Text=="Buzzer: unknown","Missing USB beeper status stays unknown");
+                typeof(MonitorForm).GetMethod("Cleanup",BindingFlags.Instance|BindingFlags.NonPublic).Invoke(monitor,new object[]{true});
+            }
+            using(var mutex=new Mutex())using(var monitor=new MonitorForm(mutex,false,new Uri("http://100.64.0.1:8099"))) {
+                var disabled=ServerTelemetry.Decode("{\"ok\":true,\"values\":{\"ups.status\":\"OL\",\"ups.beeper.status\":\"disabled\"}}");
+                BeeperControls(monitor,disabled,"Enable buzzer",false,false);
+                SetMember(monitor,"serverToken",testBeeperKey);
+                BeeperControls(monitor,disabled,"Enable buzzer",true,false);
+                var enabled=ServerTelemetry.Decode("{\"ok\":true,\"values\":{\"ups.status\":\"OB\",\"ups.beeper.status\":\"enabled\"}}");
+                BeeperControls(monitor,enabled,"Disable buzzer",true,true);
+                var muted=ServerTelemetry.Decode("{\"ok\":true,\"values\":{\"ups.status\":\"OB\",\"ups.beeper.status\":\"muted\"}}");
+                BeeperControls(monitor,muted,"Disable buzzer",true,false);
+                var unknown=ServerTelemetry.Decode("{\"ok\":true,\"values\":{\"ups.status\":\"OL\"}}");
+                BeeperControls(monitor,unknown,"Beeper status unavailable",false,false);
+                SetMember(monitor,"connected",false);
+                typeof(MonitorForm).GetMethod("Disconnected",BindingFlags.Instance|BindingFlags.NonPublic).Invoke(monitor,new object[]{"Offline test"});
+                typeof(MonitorForm).GetMethod("EnabledActions",BindingFlags.Instance|BindingFlags.NonPublic).Invoke(monitor,new object[]{true});
+                Assert(!((Button)Member(monitor,"beeperToggle")).Enabled && !((Button)Member(monitor,"mute")).Enabled,
+                    "Disconnected UPS never exposes a beeper command from stale data");
                 typeof(MonitorForm).GetMethod("Cleanup",BindingFlags.Instance|BindingFlags.NonPublic).Invoke(monitor,new object[]{true});
             }
             L.Initialize(new string[]{"--lang","it"});

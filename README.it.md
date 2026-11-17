@@ -8,12 +8,12 @@ Eaton UPS Monitor è uno strumento non ufficiale per l’Eaton 5E1600UD. L’app
 
 | Utilizzo | Download |
 | --- | --- |
-| App Windows portatile, via USB o via rete | [ZIP portatile](https://github.com/flavio92fs/eaton-ups-monitor/releases/download/v3.4.0/EatonMonitor-3.4.0-windows-x64-portable.zip) |
-| Installer Windows, con modalità USB e rete | [EatonMonitorSetup.exe](https://github.com/flavio92fs/eaton-ups-monitor/releases/download/v3.4.0/EatonMonitorSetup.exe) |
+| App Windows portatile, via USB o via rete | [ZIP portatile](https://github.com/flavio92fs/eaton-ups-monitor/releases/download/v3.4.1/EatonMonitor-3.4.1-windows-x64-portable.zip) |
+| Installer Windows, con modalità USB e rete | [EatonMonitorSetup.exe](https://github.com/flavio92fs/eaton-ups-monitor/releases/download/v3.4.1/EatonMonitorSetup.exe) |
 | Pacchetto driver USB originale, con INF e CAT | [Download ufficiale Eaton UPS Companion](https://www.eaton.com/gb/en-gb/catalog/backup-power-ups-surge-it-power-distribution/eaton-ups-companion---emea.html) · [Istruzioni per il driver](#driver-usb-e-rimozione-di-companion) |
 | Server Ubuntu con USB e dashboard di rete | [ZIP Ubuntu Docker](https://github.com/flavio92fs/eaton-ups-monitor/releases/download/v3.4.0/Eaton-UPS-Server-Ubuntu-3.4.0.zip) · [Guida all’installazione](https://github.com/flavio92fs/eaton-ups-monitor/blob/v3.4.0/server/README.it.md) |
 
-[Note di rilascio e checksum SHA-256](https://github.com/flavio92fs/eaton-ups-monitor/releases/tag/v3.4.0)
+[Note di rilascio e checksum SHA-256](https://github.com/flavio92fs/eaton-ups-monitor/releases/tag/v3.4.1)
 
 ## Hardware supportato
 
@@ -22,6 +22,8 @@ Eaton UPS Monitor è uno strumento non ufficiale per l’Eaton 5E1600UD. L’app
 Altri modelli e firmware sono **non verificati**. Chi vuole può provarli e [aprire una segnalazione di compatibilità](https://github.com/flavio92fs/eaton-ups-monitor/issues/new?template=compatibility.yml), anche in italiano. Una segnalazione non aggiunge automaticamente il dispositivo ai modelli supportati. L’app cerca solo questo identificativo USB e richiede un unico UPS corrispondente; non permette di scegliere tra più unità.
 
 ## Funzioni
+
+Lo stato del cicalino compare accanto a un unico pulsante. Quando è disabilitato puoi scegliere **Abilita cicalino**, quando è abilitato o silenziato temporaneamente compare **Disabilita cicalino**. Se lo stato non è disponibile il comando resta disattivato. Il silenziamento temporaneo è disponibile durante il funzionamento a batteria con cicalino abilitato.
 
 - Percentuale batteria, autonomia stimata dall’UPS, carico, potenza attiva/apparente, tensioni, frequenza e stati disponibili.
 - Disabilitazione e riabilitazione del cicalino, oppure silenziamento temporaneo dell’allarme attuale.

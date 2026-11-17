@@ -1,5 +1,12 @@
 # Changelog
 
+## 3.4.1
+
+- Show the reported beeper status beside a single enable/disable action in USB and Ubuntu server modes.
+- Disable beeper controls when its state is unknown, the connection is lost or remote command credentials are unavailable.
+- Offer temporary mute only while on battery with the beeper enabled, including in the outage overlay.
+- Support locally built installers containing the user's original Eaton driver package. Public release binaries contain only project code and documentation.
+
 ## 3.4.0
 
 - First public release to include the Ubuntu Docker Compose server and both Windows data sources.

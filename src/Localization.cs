@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Threading;
@@ -53,6 +53,8 @@ public static class L
         {"Parametro","Parameter"},
         {"Valore","Value"},
         {"Disabilita cicalino","Disable buzzer"},
+        {"Abilita cicalino","Enable buzzer"},
+        {"Stato cicalino sconosciuto","Beeper status unavailable"},
         {"Riabilita cicalino","Enable buzzer"},
         {"Aggiorna","Refresh"},
         {"Overlay per blackout e ripristino","Power outage and restoration overlay"},
@@ -64,7 +66,7 @@ public static class L
         {"Apri monitor","Open monitor"},
         {"Chiusura in corso…","Closing…"},
         {"Impostazioni","Settings"},
-        {"Eaton Monitor 3.4 · utility personale","Eaton Monitor 3.4 · personal utility"},
+        {"Eaton Monitor 3.4.1 · utility personale","Eaton Monitor 3.4.1 · personal utility"},
         {"Chiave cicalino","Beeper key"},
         {"Usa l’indirizzo della dashboard su LAN o Tailscale. La chiave abilita i comandi via Tailscale.","Use the dashboard address over LAN or Tailscale. The key enables commands over Tailscale."},
         {"Per i comandi serve un indirizzo IPv4 Tailscale e la chiave cicalino.","Commands require a Tailscale IPv4 address and a beeper key."},
@@ -175,7 +177,7 @@ public static class L
         {"Eaton Monitor è stato rimosso. Il driver USB Eaton è rimasto disponibile.","Eaton Monitor has been removed. The Eaton USB driver remains available."},
         {"Disinstallazione completata","Uninstallation complete"},
         {"Installa Eaton Monitor","Install Eaton Monitor"},
-        {"Eaton Monitor 3.4 · installazione personale","Eaton Monitor 3.4 · per-user installation"},
+        {"Eaton Monitor 3.4.1 · installazione personale","Eaton Monitor 3.4.1 · per-user installation"},
         {"Installa anche il driver USB Eaton (richiede amministratore)","Also install the Eaton USB driver (administrator required)"},
         {"Scegli file INF…","Choose INF file…"},
         {"Apri la pagina ufficiale Eaton per ottenere il driver","Open the official Eaton page to obtain the driver"},
@@ -192,6 +194,11 @@ public static class L
         {"Crea un collegamento sul desktop","Create a desktop shortcut"},
         {"Crea un collegamento nel menu Start e una voce tra le app installate.","Creates a Start menu shortcut and an installed apps entry."},
         {"Installa / Aggiorna","Install / Update"},
+        {"Driver integrato non disponibile.","Bundled driver unavailable."},
+        {"La cartella del driver è un collegamento. Ripristina una cartella ordinaria.","The driver directory is a link. Restore a regular directory."},
+        {"Il file del driver è un collegamento. Ripristina un file ordinario.","The driver file is a link. Restore a regular file."},
+        {"Driver originale Eaton incluso nell’installer","Original Eaton driver included in the installer"},
+        {"Il driver USB Eaton è incluso. Windows chiederà l’autorizzazione di amministratore per installarlo.","The Eaton USB driver is included. Windows will request administrator approval to install it."},
         {"Installazione completata. Puoi aprirlo dal menu Start.","Installation complete. Open it from the Start menu."},
         {"Descrittore HID esteso non supportato.","HID long descriptors are not supported."},
         {"Descrittore HID incompleto.","Incomplete HID descriptor."},

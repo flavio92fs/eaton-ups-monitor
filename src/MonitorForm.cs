@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Globalization;
@@ -44,7 +44,7 @@ public class MonitorForm : Form
     public static readonly Color Background=Color.FromArgb(18,24,34),PanelColor=Color.FromArgb(28,37,51),Muted=Color.FromArgb(167,184,205);
     const string Summary="UPS.PowerSummary.";
     Label state,updated,identity,battery,autonomy,load,power,readings,alarm,message;
-    DataGridView table;TextBox events;CheckBox overlays;Button mute,disable,enable,refresh;
+    DataGridView table;TextBox events;CheckBox overlays;Button mute,beeperToggle,refresh;
     Timer timer;NotifyIcon tray;PowerOverlay overlay;EatonUsbProbe.TelemetrySession session;
     UpsSnapshot latest;bool busy,closing,connected,exitRequested,cleaned,balloonShown,updatingStartup;bool? lastAc;string lastError;int rowCursor,pendingAlarm;
     CheckBox startupCheck;Label installState;
@@ -52,6 +52,14 @@ public class MonitorForm : Form
     string serverToken;
     Button sourceApply;
     bool CanSetBeeper {get{return serverAddress==null || ServerTelemetry.CanSetBeeper(serverAddress,serverToken);}}
+    int BeeperAction
+    {
+        get {
+            double? value=connected && latest!=null?latest.Get(Summary+"AudibleAlarmControl"):null;
+            return value==1?2:value==2 || value==3?1:0;
+        }
+    }
+    bool CanMute {get{return BeeperAction==1 && latest.Get(Summary+"AudibleAlarmControl")==2 && !latest.AcPresent && CanSetBeeper;}}
     public MonitorForm(Mutex mutex,bool startInTray,Uri address=null)
     {
         serverAddress=address;
@@ -79,15 +87,18 @@ public class MonitorForm : Form
         table.Columns.Add("name",L.T("Parametro"));table.Columns.Add("value",L.T("Valore"));table.Columns[0].FillWeight=65;table.Columns[1].FillWeight=35;details.Controls.Add(table);
         events=new TextBox{Dock=DockStyle.Fill,Multiline=true,ReadOnly=true,ScrollBars=ScrollBars.Vertical,BackColor=PanelColor,ForeColor=Color.White,BorderStyle=BorderStyle.None};history.Controls.Add(events);
         var buttons=new FlowLayoutPanel{Dock=DockStyle.Fill,Padding=new Padding(0,10,0,0)};
-        mute=ButtonFor(L.T("Silenzia allarme attuale"),205,async()=>await SetAlarm(3));disable=ButtonFor(L.T("Disabilita cicalino"),170,async()=>await SetAlarm(1));enable=ButtonFor(L.T("Riabilita cicalino"),170,async()=>await SetAlarm(2));refresh=ButtonFor(L.T("Aggiorna"),105,async()=>await Poll());
-        buttons.Controls.AddRange(new Control[]{mute,disable,enable,refresh});root.Controls.Add(buttons,0,4);
+        beeperToggle=ButtonFor(L.T("Stato cicalino sconosciuto"),210,async()=>await SetAlarm(BeeperAction));
+        mute=ButtonFor(L.T("Silenzia allarme attuale"),205,async()=>await SetAlarm(3));
+        refresh=ButtonFor(L.T("Aggiorna"),105,async()=>await Poll());
+        alarm=new Label{Text=L.T("Cicalino: stato sconosciuto"),Width=310,Height=36,TextAlign=ContentAlignment.MiddleLeft,ForeColor=Muted};
+        buttons.Controls.AddRange(new Control[]{beeperToggle,mute,refresh,alarm});root.Controls.Add(buttons,0,4);
         var options=new FlowLayoutPanel{Dock=DockStyle.Fill};overlays=new CheckBox{Text=L.T("Overlay per blackout e ripristino"),Checked=AppIntegration.OverlaysEnabled,AutoSize=true,Padding=new Padding(0,8,16,0)};
-        overlays.CheckedChanged+=(s,e)=>{try{AppIntegration.OverlaysEnabled=overlays.Checked;}catch(Exception ex){Log(L.T("Preferenza non salvata: ")+ex.Message);}if(!overlays.Checked)overlay.HideBattery();else if(connected && latest!=null && !latest.AcPresent)overlay.Display(this,"battery",latest,true,false,serverAddress!=null,CanSetBeeper);};
-        options.Controls.Add(overlays);options.Controls.Add(ButtonFor(L.T("Anteprima overlay"),175,()=>{bool real=connected && latest!=null && !latest.AcPresent;overlay.Display(this,"battery",latest,true,!real,serverAddress!=null,CanSetBeeper);return Task.FromResult(0);}));
+        overlays.CheckedChanged+=(s,e)=>{try{AppIntegration.OverlaysEnabled=overlays.Checked;}catch(Exception ex){Log(L.T("Preferenza non salvata: ")+ex.Message);}if(!overlays.Checked)overlay.HideBattery();else if(connected && latest!=null && !latest.AcPresent)overlay.Display(this,"battery",latest,true,false,serverAddress!=null,CanMute);};
+        options.Controls.Add(overlays);options.Controls.Add(ButtonFor(L.T("Anteprima overlay"),175,()=>{bool real=connected && latest!=null && !latest.AcPresent;overlay.Display(this,"battery",latest,true,!real,serverAddress!=null,CanMute);return Task.FromResult(0);}));
         options.Controls.Add(ButtonFor(L.T("Esci completamente"),185,()=>{RequestExit();return Task.FromResult(0);}));root.Controls.Add(options,0,5);
         var footer=new Panel{Dock=DockStyle.Fill};updated=LabelAt(L.T("In attesa di dati"),0,3,280,25,9,false);updated.ForeColor=Muted;
-        alarm=LabelAt("",280,3,220,25,9,false);message=LabelAt(L.T("Nessuno spegnimento automatico del PC configurato"),505,3,460,25,9,false);message.ForeColor=Muted;
-        footer.Controls.Add(updated);footer.Controls.Add(alarm);footer.Controls.Add(message);root.Controls.Add(footer,0,6);
+        message=LabelAt(L.T("Nessuno spegnimento automatico del PC configurato"),280,3,650,25,9,false);message.ForeColor=Muted;
+        footer.Controls.Add(updated);footer.Controls.Add(message);root.Controls.Add(footer,0,6);
         overlay=new PowerOverlay(()=>{var ignored=SetAlarm(3);});
         tray=new NotifyIcon{Icon=Icon,Text="Eaton Monitor"};var menu=new ContextMenuStrip();menu.Items.Add(L.T("Apri monitor"),null,(s,e)=>Restore());menu.Items.Add(L.T("Esci completamente"),null,(s,e)=>RequestExit());tray.ContextMenuStrip=menu;tray.DoubleClick+=(s,e)=>Restore();
         Resize+=(s,e)=>{if(WindowState==FormWindowState.Minimized)HideToTray(false);};
@@ -104,7 +115,7 @@ public class MonitorForm : Form
     TabPage CreateSettings()
     {
         var page=new TabPage(L.T("Impostazioni")){BackColor=PanelColor,AutoScroll=true};
-        var heading=LabelAt(L.T("Eaton Monitor 3.4 · utility personale"),22,18,810,35,16,true);page.Controls.Add(heading);
+        var heading=LabelAt(L.T("Eaton Monitor 3.4.1 · utility personale"),22,18,810,35,16,true);page.Controls.Add(heading);
         page.Controls.Add(LabelAt(L.T("Sorgente dati"),24,65,145,25,10,true));
         var source=new ComboBox{DropDownStyle=ComboBoxStyle.DropDownList,Location=new Point(170,61),Width=240};
         source.Items.AddRange(new object[]{L.T("USB diretto"),L.T("Server Ubuntu")});
@@ -189,7 +200,15 @@ public class MonitorForm : Form
     }
     void Restore(){ShowInTaskbar=true;Show();WindowState=FormWindowState.Normal;Activate();}
     void Log(string text){events.AppendText(DateTime.Now.ToString("HH:mm:ss")+"  "+text+Environment.NewLine);if(events.TextLength>20000)events.Text=events.Text.Substring(events.TextLength-15000);}
-    void EnabledActions(bool enabled){mute.Enabled=disable.Enabled=enable.Enabled=enabled && connected && CanSetBeeper;refresh.Enabled=enabled;sourceApply.Enabled=enabled;}
+    void EnabledActions(bool enabled)
+    {
+        int action=BeeperAction;
+        beeperToggle.Text=L.T(action==2?"Abilita cicalino":action==1?"Disabilita cicalino":"Stato cicalino sconosciuto");
+        beeperToggle.Enabled=enabled && connected && CanSetBeeper && action!=0;
+        mute.Enabled=enabled && CanMute;
+        refresh.Enabled=enabled;
+        sourceApply.Enabled=enabled;
+    }
     async Task Poll()
     {
         if(busy || closing)return;busy=true;sourceApply.Enabled=false;
@@ -202,6 +221,7 @@ public class MonitorForm : Form
     async Task SetAlarm(int value)
     {
         if(closing || !connected || !CanSetBeeper)return;
+        if(value==0 || (value!=BeeperAction && !(value==3 && CanMute)))return;
         if(busy){pendingAlarm=value;Log(L.T("Comando cicalino in attesa della lettura USB."));return;}
         busy=true;EnabledActions(false);
         Uri address=serverAddress;
@@ -225,7 +245,7 @@ public class MonitorForm : Form
         bool remote=serverAddress!=null;
         state.Text=L.T(remote?"UPS non disponibile dal server":"UPS non disponibile via USB");state.ForeColor=Muted;battery.Text=autonomy.Text=load.Text=power.Text="—";
         readings.Text=L.T(remote?"Controlla il server Ubuntu, il collegamento USB al server e la rete LAN o Tailscale.":"Il collegamento perso non indica che sia mancata la corrente. Controlla il cavo USB e lascia Companion chiuso.");
-        updated.Text=L.T("Dati non disponibili");alarm.Text=L.T("Cicalino: stato sconosciuto");
+        updated.Text=L.T("Dati non disponibili");alarm.Text=L.T("Cicalino: stato sconosciuto");alarm.ForeColor=Muted;
         identity.Text=error;
         table.Rows.Clear();
         tray.Text="Eaton · "+L.T("Dati non disponibili");
@@ -253,6 +273,7 @@ public class MonitorForm : Form
         battery.Text=Format(s.Get(Summary+"RemainingCapacity"),"%");autonomy.Text=Runtime(s.Get(Summary+"RunTimeToEmpty"));load.Text=Format(s.Get(Summary+"PercentLoad"),"%");power.Text=Format(s.Get("UPS.PowerConverter.Output.ActivePower")," W");
         readings.Text=L.T("Ingresso ")+Format(s.Get("UPS.PowerConverter.Input[1].Voltage")," V")+L.T("     Uscita ")+Format(s.Get("UPS.PowerConverter.Output.Voltage")," V")+L.T("     Batteria ")+Format(s.Get(Summary+"Voltage")," V")+L.T("     Frequenza uscita ")+Format(s.Get("UPS.PowerConverter.Output.Frequency")," Hz");
         updated.Text=L.T("Aggiornato alle ")+s.Captured.ToString("HH:mm:ss");alarm.Text=L.T("Cicalino: ")+AlarmText(s.Get(Summary+"AudibleAlarmControl"));
+        alarm.ForeColor=s.Get(Summary+"AudibleAlarmControl")==1?Color.FromArgb(255,196,80):Muted;
         string tip="Eaton · "+L.T(ac?"Rete":"A batteria")+" · "+battery.Text+" · "+power.Text;
         tray.Text=tip.Length<=63?tip:tip.Substring(0,63);
         rowCursor=0;
@@ -269,7 +290,7 @@ public class MonitorForm : Form
         bool transition=!lastAc.HasValue || lastAc.Value!=ac;
         if(transition)Log(ac?L.T("Alimentazione di rete presente."):L.T("Mancanza rete: funzionamento a batteria."));
         if(overlays.Checked) {
-            if(!ac)overlay.Display(this,"battery",s,transition || reconnect,false,serverAddress!=null,CanSetBeeper);
+            if(!ac)overlay.Display(this,"battery",s,transition || reconnect,false,serverAddress!=null,CanMute);
             else if(lastAc.HasValue && !lastAc.Value)overlay.Display(this,"mains",s,true,false);
             else if(reconnect)overlay.HideBattery();
         }

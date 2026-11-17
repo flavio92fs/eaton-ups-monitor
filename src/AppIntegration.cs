@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Diagnostics;
 using System.ComponentModel;
 using System.Drawing;
@@ -14,8 +14,8 @@ using Microsoft.Win32;
 [assembly: AssemblyTitle("Eaton Monitor")]
 [assembly: AssemblyProduct("Eaton UPS Monitor")]
 [assembly: AssemblyDescription("Unofficial USB monitor for Eaton 5E1600UD")]
-[assembly: AssemblyVersion("3.4.0.0")]
-[assembly: AssemblyFileVersion("3.4.0.0")]
+[assembly: AssemblyVersion("3.4.1.0")]
+[assembly: AssemblyFileVersion("3.4.1.0")]
 
 public static class AppIntegration
 {
@@ -31,6 +31,15 @@ public static class AppIntegration
     public static string InstalledExe {get{return Path.Combine(InstallDirectory,"EatonMonitor.exe");}}
     public static string StartupCommand {get{return "\""+InstalledExe+"\" --tray";}}
     public static bool Installed {get{return File.Exists(InstalledExe);}}
+    public static bool HasBundledDriver
+    {
+        get {
+            var assembly=Assembly.GetExecutingAssembly();
+            return assembly.GetManifestResourceInfo("EatonMonitor.DriverInf")!=null
+                && assembly.GetManifestResourceInfo("EatonMonitor.DriverCat")!=null
+                && assembly.GetManifestResourceInfo("EatonMonitor.DriverLicense")!=null;
+        }
+    }
     public static Icon ApplicationIcon {get{return Icon.ExtractAssociatedIcon(Application.ExecutablePath)??SystemIcons.Application;}}
     public static void Signal(bool exit){IntPtr window=FindWindow(null,WindowTitle);if(window!=IntPtr.Zero)PostMessage(window,exit?ExitMessage:ShowMessage,IntPtr.Zero,IntPtr.Zero);}
     public static bool AutoStart
@@ -118,7 +127,7 @@ public static class AppIntegration
         Shortcut(Path.Combine(menu,"Eaton Monitor.lnk"),target);
         if(desktop)Shortcut(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory),"Eaton Monitor.lnk"),target);
         using(var key=Registry.CurrentUser.CreateSubKey(UninstallKey)) {
-            key.SetValue("DisplayName",L.T("Eaton Monitor (utility personale)"));key.SetValue("DisplayVersion","3.4.0");key.SetValue("Publisher",L.T("Utility personale"));
+            key.SetValue("DisplayName",L.T("Eaton Monitor (utility personale)"));key.SetValue("DisplayVersion","3.4.1");key.SetValue("Publisher",L.T("Utility personale"));
             key.SetValue("InstallLocation",InstallDirectory);key.SetValue("DisplayIcon",target+",0");key.SetValue("UninstallString","\""+target+"\" --uninstall");
             key.SetValue("NoModify",1,RegistryValueKind.DWord);key.SetValue("NoRepair",1,RegistryValueKind.DWord);
         }
@@ -136,7 +145,7 @@ public static class AppIntegration
     }
     public static bool RestoreDriver(string inf)
     {
-        // The user supplies an official driver; vendor files are never embedded.
+        // Windows validates the original driver package through PnPUtil.
         inf=Path.GetFullPath(inf);
         if(!File.Exists(inf) || !string.Equals(Path.GetExtension(inf),".inf",StringComparison.OrdinalIgnoreCase) || inf.IndexOf('"')>=0)throw new Exception(L.T("File del driver non valido."));
         var start=new ProcessStartInfo(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows),"System32","pnputil.exe"),"/add-driver \""+inf+"\" /install") {UseShellExecute=true,Verb="runas",WindowStyle=ProcessWindowStyle.Hidden};
@@ -151,6 +160,23 @@ public static class AppIntegration
             if(ex.NativeErrorCode==1223)throw new Exception(L.T("Installazione del driver annullata nella richiesta di Windows."));
             throw;
         }
+    }
+    public static string ExtractBundledDriver()
+    {
+        if(!HasBundledDriver)throw new InvalidOperationException(L.T("Driver integrato non disponibile."));
+        string directory=Path.Combine(InstallDirectory,"driver-backup");
+        if(Directory.Exists(directory) && (File.GetAttributes(directory)&FileAttributes.ReparsePoint)!=0)
+            throw new IOException(L.T("La cartella del driver è un collegamento. Ripristina una cartella ordinaria."));
+        Directory.CreateDirectory(directory);
+        foreach(string name in new[]{"ups_usb.inf","ups_usb.cat","EATON-DRIVER-LICENSE.txt"}) {
+            string path=Path.Combine(directory,name);
+            if(File.Exists(path) && (File.GetAttributes(path)&FileAttributes.ReparsePoint)!=0)
+                throw new IOException(L.T("Il file del driver è un collegamento. Ripristina un file ordinario."));
+        }
+        ResourceToFile("EatonMonitor.DriverInf",Path.Combine(directory,"ups_usb.inf"));
+        ResourceToFile("EatonMonitor.DriverCat",Path.Combine(directory,"ups_usb.cat"));
+        ResourceToFile("EatonMonitor.DriverLicense",Path.Combine(directory,"EATON-DRIVER-LICENSE.txt"));
+        return Path.Combine(directory,"ups_usb.inf");
     }
     public static string DriverResult(bool restartRequired)
     {
@@ -178,7 +204,7 @@ public static class AppIntegration
         if(File.Exists(InstalledExe))throw new Exception(L.T("Eaton Monitor è ancora aperto. Usa Esci completamente e riprova."));
         SetAutoStart(false);Registry.CurrentUser.DeleteSubKeyTree(UninstallKey,false);
         File.Delete(Path.Combine(root,"LEGGIMI.txt"));File.Delete(Path.Combine(root,"README.md"));File.Delete(Path.Combine(root,"README.it.md"));File.Delete(Path.Combine(root,"LICENSE"));string driver=Path.Combine(root,"driver-backup");
-        if(Directory.Exists(driver)){File.Delete(Path.Combine(driver,"ups_usb.inf"));File.Delete(Path.Combine(driver,"ups_usb.cat"));if(Directory.GetFileSystemEntries(driver).Length==0)Directory.Delete(driver,false);}
+        if(Directory.Exists(driver)){File.Delete(Path.Combine(driver,"ups_usb.inf"));File.Delete(Path.Combine(driver,"ups_usb.cat"));File.Delete(Path.Combine(driver,"EATON-DRIVER-LICENSE.txt"));if(Directory.GetFileSystemEntries(driver).Length==0)Directory.Delete(driver,false);}
         if(Directory.Exists(root) && Directory.GetFileSystemEntries(root).Length==0)Directory.Delete(root,false);
         string menu=Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Programs),"Eaton Monitor");File.Delete(Path.Combine(menu,"Eaton Monitor.lnk"));
         if(Directory.Exists(menu) && Directory.GetFileSystemEntries(menu).Length==0)Directory.Delete(menu,false);
@@ -206,7 +232,7 @@ public class SetupForm : Form
         StartPosition=FormStartPosition.CenterParent;
         Font=new Font("Segoe UI",10);
         Icon=AppIntegration.ApplicationIcon;
-        Controls.Add(new Label{Text=L.T("Eaton Monitor 3.4 · installazione personale"),Location=new Point(22,20),Size=new Size(606,30),Font=new Font("Segoe UI",15,FontStyle.Bold)});
+        Controls.Add(new Label{Text=L.T("Eaton Monitor 3.4.1 · installazione personale"),Location=new Point(22,20),Size=new Size(606,30),Font=new Font("Segoe UI",15,FontStyle.Bold)});
         Controls.Add(new TextBox{Text=AppIntegration.InstallDirectory,ReadOnly=true,Location=new Point(24,67),Width=602});
         startup=new CheckBox{Text=L.T("Avvia all’accesso a Windows, nella barra dell’orologio"),Checked=AppIntegration.AutoStart,Location=new Point(24,107),AutoSize=true};
         desktop=new CheckBox{Text=L.T("Crea un collegamento sul desktop"),Location=new Point(24,141),AutoSize=true};
@@ -218,12 +244,20 @@ public class SetupForm : Form
             if(selected!=null)driverPath.Text=selected;
         };
         installDriver.CheckedChanged+=(s,e)=>driverPath.Enabled=chooseDriver.Enabled=installDriver.Checked;
+        if(AppIntegration.HasBundledDriver) {
+            installDriver.Checked=true;
+            driverPath.Text=L.T("Driver originale Eaton incluso nell’installer");
+            driverPath.Enabled=chooseDriver.Enabled=false;
+            installDriver.CheckedChanged+=(s,e)=>driverPath.Enabled=chooseDriver.Enabled=false;
+        }
         var guide=new LinkLabel{Text=L.T("Apri la pagina ufficiale Eaton per ottenere il driver"),Location=new Point(24,265),AutoSize=true};
         guide.LinkClicked+=(s,e)=>{
             try{Process.Start(new ProcessStartInfo(EatonDownload){UseShellExecute=true});}
             catch(Exception ex){MessageBox.Show(this,ex.Message,Text,MessageBoxButtons.OK,MessageBoxIcon.Error);}
         };
         status=new Label{Text=L.T("Per il driver, seleziona ups_usb.inf dalla copia originale con ups_usb.cat nella stessa cartella."),Location=new Point(24,301),Size=new Size(602,55)};
+        if(AppIntegration.HasBundledDriver)
+            status.Text=L.T("Il driver USB Eaton è incluso. Windows chiederà l’autorizzazione di amministratore per installarlo.");
         install=new Button{Text=L.T("Installa / Aggiorna"),Location=new Point(412,371),Size=new Size(214,36)};
         install.Click+=async(s,e)=>await InstallAsync();
         FormClosing+=(s,e)=>{if(installing)e.Cancel=true;};
@@ -232,8 +266,9 @@ public class SetupForm : Form
 
     async Task InstallAsync()
     {
-        string inf=installDriver.Checked?driverPath.Text:null;
-        if(installDriver.Checked && string.IsNullOrWhiteSpace(inf)){
+        bool bundled=installDriver.Checked && AppIntegration.HasBundledDriver;
+        string inf=installDriver.Checked && !bundled?driverPath.Text:null;
+        if(installDriver.Checked && !bundled && string.IsNullOrWhiteSpace(inf)){
             status.Text=L.T("Seleziona il file INF originale Eaton per continuare.");
             return;
         }
@@ -250,6 +285,7 @@ public class SetupForm : Form
         try {
             AppIntegration.Install(startup.Checked,desktop.Checked);
             appInstalled=true;
+            if(bundled)inf=AppIntegration.ExtractBundledDriver();
             if(inf!=null){
                 status.Text=L.T("Installazione del driver USB Eaton in corso…");
                 bool restartRequired=await Task.Run(()=>AppIntegration.RestoreDriver(inf));
@@ -262,7 +298,7 @@ public class SetupForm : Form
         }finally{
             installing=false;
             startup.Enabled=desktop.Enabled=installDriver.Enabled=install.Enabled=true;
-            chooseDriver.Enabled=driverPath.Enabled=installDriver.Checked;
+            chooseDriver.Enabled=driverPath.Enabled=installDriver.Checked && !AppIntegration.HasBundledDriver;
         }
         DialogResult=DialogResult.OK;
         Close();

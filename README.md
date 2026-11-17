@@ -8,12 +8,12 @@ Eaton UPS Monitor is an unofficial monitor for the Eaton 5E1600UD. The Windows a
 
 | Use | Download |
 | --- | --- |
-| Windows portable app with USB and network modes | [Portable ZIP](https://github.com/flavio92fs/eaton-ups-monitor/releases/download/v3.4.0/EatonMonitor-3.4.0-windows-x64-portable.zip) |
-| Windows installer with USB and network modes | [EatonMonitorSetup.exe](https://github.com/flavio92fs/eaton-ups-monitor/releases/download/v3.4.0/EatonMonitorSetup.exe) |
+| Windows portable app with USB and network modes | [Portable ZIP](https://github.com/flavio92fs/eaton-ups-monitor/releases/download/v3.4.1/EatonMonitor-3.4.1-windows-x64-portable.zip) |
+| Windows installer with USB and network modes | [EatonMonitorSetup.exe](https://github.com/flavio92fs/eaton-ups-monitor/releases/download/v3.4.1/EatonMonitorSetup.exe) |
 | Original USB driver package, including INF and CAT | [Official Eaton UPS Companion download](https://www.eaton.com/gb/en-gb/catalog/backup-power-ups-surge-it-power-distribution/eaton-ups-companion---emea.html) · [Driver instructions](#usb-driver-and-companion-removal) |
 | Ubuntu server with USB and network dashboard | [Ubuntu Docker ZIP](https://github.com/flavio92fs/eaton-ups-monitor/releases/download/v3.4.0/Eaton-UPS-Server-Ubuntu-3.4.0.zip) · [Setup guide](https://github.com/flavio92fs/eaton-ups-monitor/blob/v3.4.0/server/README.md) |
 
-[Release notes and SHA-256 checksums](https://github.com/flavio92fs/eaton-ups-monitor/releases/tag/v3.4.0)
+[Release notes and SHA-256 checksums](https://github.com/flavio92fs/eaton-ups-monitor/releases/tag/v3.4.1)
 
 ## Supported hardware
 
@@ -25,6 +25,7 @@ Other UPS models and firmware versions are **unverified**. You are welcome to te
 
 - Battery percentage, UPS-estimated runtime, load, active/apparent power, voltages, frequency and available status flags.
 - Disable/enable the buzzer, or mute the current alarm temporarily.
+- The beeper status appears next to a single action button. A disabled beeper offers **Enable buzzer**. An enabled or temporarily muted beeper offers **Disable buzzer**. Unavailable status disables the command. Temporary mute is offered while the UPS is on battery with its beeper enabled.
 - On-screen overlay when mains power fails or returns; a lost USB connection has a distinct notification.
 - Closing or minimizing the window keeps the app in the system tray. Use **Exit completely** to stop it.
 - Optional per-user installation, desktop shortcut and startup at Windows sign-in in the tray.

@@ -17,7 +17,7 @@ jobs:
         with:
           name: EatonMonitor-windows-x64
           path: |
-            dist/EatonMonitor-3.4.0-windows-x64.zip
-            dist/EatonMonitor-3.4.0-windows-x64-portable.zip
+            dist/EatonMonitor-3.4.1-windows-x64.zip
+            dist/EatonMonitor-3.4.1-windows-x64-portable.zip
             dist/EatonMonitorSetup.exe
             dist/WINDOWS-SHA256SUMS.txt
